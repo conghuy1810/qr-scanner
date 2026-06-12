@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import './QRPayment.css';
 
-export default function QRPayment() {
+export default function QRPayment({ orderData = null, onBack = null }) {
   const getInitialOrderData = () => {
+    // Priority: use orderData prop > URL parameters > defaults
+    if (orderData) {
+      return {
+        code: orderData.code || orderData.billCode || 'DH12345',
+        amount: parseInt(orderData.amount) || 100000,
+        bank: orderData.bank || orderData.bankName || 'Vietcombank',
+        accountNumber: orderData.accountNumber || orderData.bankAccount || '0010000000355',
+        qrUrl: orderData.qrUrl || null,
+      };
+    }
+
     const params = new URLSearchParams(window.location.search);
     return {
       code: params.get('code') || 'DH12345',
       amount: parseInt(params.get('amount')) || 100000,
       bank: params.get('bank') || 'Vietcombank',
       accountNumber: params.get('accountNumber') || '0010000000355',
+      qrUrl: params.get('qrUrl') || null,
     };
   };
 
-  const [orderData, setOrderData] = useState(getInitialOrderData());
+  const [orderData_, setOrderData] = useState(getInitialOrderData());
   const [status, setStatus] = useState('waiting');
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const [formData, setFormData] = useState(getInitialOrderData());
@@ -34,6 +46,9 @@ export default function QRPayment() {
 
   // Generate QR URL
   const generateQRUrl = (data) => {
+    if (data.qrUrl) {
+      return data.qrUrl;
+    }
     const params = new URLSearchParams({
       acc: data.accountNumber,
       bank: data.bank,
@@ -100,15 +115,22 @@ export default function QRPayment() {
     <div className="qr-payment-container">
       <article className="payment-card">
         <header>
-          <div>Thanh toán đơn hàng</div>
-          <strong>{vnd.format(orderData.amount)}</strong>
+          <div className="header-content">
+            <div>Thanh toán đơn hàng</div>
+            <strong>{vnd.format(orderData_.amount)}</strong>
+          </div>
+          {onBack && (
+            <button className="btn-back" onClick={onBack} title="Quay lại">
+              ← Quay lại
+            </button>
+          )}
         </header>
 
         <main>
           {/* QR Code Display */}
           <div className="qr-section">
             <img 
-              src={generateQRUrl(orderData)} 
+              src={generateQRUrl(orderData_)} 
               alt="QR code thanh toán" 
               className="qr-code"
             />
@@ -119,10 +141,10 @@ export default function QRPayment() {
           <dl className="order-details">
             <dt>Ngân hàng</dt>
             <dd>
-              <span>{orderData.bank}</span>
+              <span>{orderData_.bank}</span>
               <button 
                 className={`btn-copy ${copiedField === 'bank' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData.bank, 'bank')}
+                onClick={() => copyToClipboard(orderData_.bank, 'bank')}
                 title="Copy"
               >
                 <span className="material-icons">
@@ -133,10 +155,10 @@ export default function QRPayment() {
 
             <dt>Số tài khoản</dt>
             <dd>
-              <span>{orderData.accountNumber}</span>
+              <span>{orderData_.accountNumber}</span>
               <button 
                 className={`btn-copy ${copiedField === 'accountNumber' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData.accountNumber, 'accountNumber')}
+                onClick={() => copyToClipboard(orderData_.accountNumber, 'accountNumber')}
                 title="Copy"
               >
                 <span className="material-icons">
@@ -147,10 +169,10 @@ export default function QRPayment() {
 
             <dt>Nội dung</dt>
             <dd>
-              <span>{orderData.code}</span>
+              <span>{orderData_.code}</span>
               <button 
                 className={`btn-copy ${copiedField === 'code' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData.code, 'code')}
+                onClick={() => copyToClipboard(orderData_.code, 'code')}
                 title="Copy"
               >
                 <span className="material-icons">
@@ -161,10 +183,10 @@ export default function QRPayment() {
 
             <dt>Số tiền</dt>
             <dd>
-              <span>{vnd.format(orderData.amount)}</span>
+              <span>{vnd.format(orderData_.amount)}</span>
               <button 
                 className={`btn-copy ${copiedField === 'amount' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData.amount.toString(), 'amount')}
+                onClick={() => copyToClipboard(orderData_.amount.toString(), 'amount')}
                 title="Copy"
               >
                 <span className="material-icons">
