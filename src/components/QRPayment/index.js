@@ -8,20 +8,11 @@ export default function QRPayment({ orderData = null, onBack = null }) {
       return {
         code: orderData.code || orderData.billCode || 'DH12345',
         amount: parseInt(orderData.amount) || 100000,
-        bank: orderData.bank || orderData.bankName || 'Vietcombank',
-        accountNumber: orderData.accountNumber || orderData.bankAccount || '0010000000355',
+        bank: process.env.REACT_APP_BANK_NAME,
+        accountNumber: process.env.REACT_APP_BANK_ACCOUNT_NUMBER,
         qrUrl: orderData.qrUrl || null,
       };
     }
-
-    const params = new URLSearchParams(window.location.search);
-    return {
-      code: params.get('code') || 'DH12345',
-      amount: parseInt(params.get('amount')) || 100000,
-      bank: params.get('bank') || 'Vietcombank',
-      accountNumber: params.get('accountNumber') || '0010000000355',
-      qrUrl: params.get('qrUrl') || null,
-    };
   };
 
   const [orderData_, setOrderData] = useState(getInitialOrderData());
@@ -55,7 +46,7 @@ export default function QRPayment({ orderData = null, onBack = null }) {
       amount: data.amount,
       des: data.code,
     });
-    return `https://qr.sepay.vn/img?${params.toString()}`;
+    return `${process.env.REACT_APP_QR_API_URL}?${params.toString()}`;
   };
 
   // Timer effect

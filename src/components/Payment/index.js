@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Payment.css';
 
 export default function Payment({ onNavigateToQRPayment }) {
+  const params = new URLSearchParams(window.location.search);
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,20 +26,26 @@ export default function Payment({ onNavigateToQRPayment }) {
 
     try {
       // Default order data
-      const orderCode = `DH${Date.now()}`;
-      const accountNumber = '0010000000355';
-      const bank = 'Vietcombank';
+      const orderCode = params.get('code');
+      const accountNumber = process.env.REACT_APP_BANK_ACCOUNT_NUMBER;
+      const bank = process.env.REACT_APP_BANK_NAME;
 
-      // Build API URL with all required parameters
-      const params = new URLSearchParams({
+      // Build order payload and call API via POST
+      const payload = {
         acc: accountNumber,
         bank: bank,
         amount: amount,
         des: orderCode,
+      };
+
+      const response = await fetch(`${process.env.REACT_APP_API_HOST}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
-      const response = await fetch(`/api/orders?${params.toString()}`);
-      
       if (!response.ok) {
         throw new Error(`API error: ${response.statusText}`);
       }
@@ -48,7 +55,6 @@ export default function Payment({ onNavigateToQRPayment }) {
       // Navigate to QRPayment with the order data
       onNavigateToQRPayment(orderData);
     } catch (err) {
-      console.error('Error fetching order:', err);
       setError(err.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
       setSelectedAmount(null);
     } finally {
