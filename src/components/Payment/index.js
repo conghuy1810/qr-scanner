@@ -10,7 +10,7 @@ export default function Payment({ onNavigateToQRPayment }) {
 
   // Predefined denominations
   const denominations = [
-    20000, 50000, 100000, 200000, 500000, 1000000, 5000000, 10000000,
+    1000, 20000, 50000, 100000, 200000, 500000, 1000000, 5000000, 10000000,
   ];
 
   const MIN_AMOUNT = 20000;
