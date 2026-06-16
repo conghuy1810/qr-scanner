@@ -58,15 +58,10 @@ export default function Payment({ onNavigateToQRPayment }) {
       }
 
       const accountId = usersData.id;
-      const accountNumber = process.env.REACT_APP_BANK_ACCOUNT_NUMBER;
-      const bank = process.env.REACT_APP_BANK_NAME;
-      const encodedId = "TKCD" + accountId + ' chuyen khoan' ;
       // Build order payload and call API via POST
       const payload = {
-        acc: accountNumber,
-        bank: bank,
         amount: amount,
-        des: encodedId,
+        accountId,
       };
 
       const response = await fetch(

@@ -6,12 +6,13 @@ export default function QRPayment({ orderData = null, onBack = null }) {
     // Priority: use orderData prop > URL parameters > defaults
     if (orderData) {
       return {
-        code: orderData.code || orderData.billCode || "DH12345",
+        code: orderData.code || orderData.billCode ,
         amount: parseInt(orderData.amount) || 100000,
         usernameOrEmail: orderData.usernameOrEmail || "",
-        bank: process.env.REACT_APP_BANK_NAME,
-        accountNumber: process.env.REACT_APP_BANK_ACCOUNT_NUMBER,
+        bank: orderData.bank,
+        accountNumber: orderData.accountNumber ,
         qrUrl: orderData.qrUrl || null,
+        orderId: orderData.orderId || null,
       };
     }
   };
@@ -22,6 +23,7 @@ export default function QRPayment({ orderData = null, onBack = null }) {
   const [formData, setFormData] = useState(getInitialOrderData());
   const [showForm, setShowForm] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+  const [pollError, setPollError] = useState(null);
 
   const vnd = new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -66,6 +68,37 @@ export default function QRPayment({ orderData = null, onBack = null }) {
 
     return () => clearInterval(timer);
   }, [status, timeLeft]);
+
+  // Poll order status every 10 seconds while waiting
+  useEffect(() => {
+    if (!orderData_?.orderId || status !== "waiting") return;
+
+    const fetchOrderStatus = async () => {
+      try {
+        setPollError(null);
+        const response = await fetch(`/v1/orders/${orderData_.orderId}/status`);
+        if (!response.ok) {
+          throw new Error(`Lỗi khi kiểm tra trạng thái: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const newStatus = data?.status;
+
+        if (newStatus === "paid" || newStatus === "completed") {
+          setStatus("paid");
+        } else if (newStatus === "expired") {
+          setStatus("expired");
+        }
+      } catch (error) {
+        setPollError(error.message || "Lỗi khi kiểm tra trạng thái đơn hàng.");
+      }
+    };
+
+    fetchOrderStatus();
+    const pollInterval = setInterval(fetchOrderStatus, 10000);
+
+    return () => clearInterval(pollInterval);
+  }, [orderData_, status]);
 
   // Format time display
   const formatTime = (seconds) => {
@@ -124,16 +157,28 @@ export default function QRPayment({ orderData = null, onBack = null }) {
 
         <main>
           {/* QR Code Display */}
-          <div className="qr-section">
-            <img
-              src={generateQRUrl(orderData_)}
-              alt="QR code thanh toán"
-              className="qr-code"
-            />
-            <p className="qr-instruction">
-              Mở app ngân hàng → Quét QR → Xác nhận
-            </p>
-          </div>
+          {status === "paid" ? (
+            <div className="payment-success">
+              <div className="success-icon">✓</div>
+              <p className="success-text">
+                Thanh toán đã hoàn tất thành công.
+              </p>
+              <p className="success-subtext">
+                Đơn hàng của bạn đã được xử lý. Cảm ơn bạn đã sử dụng dịch vụ.
+              </p>
+            </div>
+          ) : (
+            <div className="qr-section">
+              <img
+                src={generateQRUrl(orderData_)}
+                alt="QR code thanh toán"
+                className="qr-code"
+              />
+              <p className="qr-instruction">
+                Mở app ngân hàng → Quét QR → Xác nhận
+              </p>
+            </div>
+          )}
 
           {/* Order Details */}
           <dl className="order-details">
@@ -230,6 +275,12 @@ export default function QRPayment({ orderData = null, onBack = null }) {
           >
             {statusInfo.text}
           </div>
+
+          {pollError && (
+            <div className="error-message" style={{ marginTop: "0.75rem" }}>
+              ⚠️ {pollError}
+            </div>
+          )}
 
           {status === "expired" && (
             <button
