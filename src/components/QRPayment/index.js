@@ -8,6 +8,7 @@ export default function QRPayment({ orderData = null, onBack = null }) {
       return {
         code: orderData.code || orderData.billCode || 'DH12345',
         amount: parseInt(orderData.amount) || 100000,
+        usernameOrEmail: orderData.usernameOrEmail || '',
         bank: process.env.REACT_APP_BANK_NAME,
         accountNumber: process.env.REACT_APP_BANK_ACCOUNT_NUMBER,
         qrUrl: orderData.qrUrl || null,
@@ -171,7 +172,23 @@ export default function QRPayment({ orderData = null, onBack = null }) {
                 </span>
               </button>
             </dd>
-
+ 
+            <dt>Username / Gmail</dt>
+            <dd>
+              <span>{orderData_.usernameOrEmail || 'Chưa có'}</span>
+              {orderData_.usernameOrEmail && (
+                <button 
+                  className={`btn-copy ${copiedField === 'usernameOrEmail' ? 'copied' : ''}`}
+                  onClick={() => copyToClipboard(orderData_.usernameOrEmail, 'usernameOrEmail')}
+                  title="Copy"
+                >
+                  <span className="material-icons">
+                    {copiedField === 'usernameOrEmail' ? 'check_circle' : 'content_copy'}
+                  </span>
+                </button>
+              )}
+            </dd>
+ 
             <dt>Số tiền</dt>
             <dd>
               <span>{vnd.format(orderData_.amount)}</span>
@@ -246,7 +263,18 @@ export default function QRPayment({ orderData = null, onBack = null }) {
                   onChange={handleFormChange}
                 />
               </div>
-
+ 
+              <div className="form-group">
+                <label htmlFor="usernameOrEmail">Username / Gmail:</label>
+                <input
+                  id="usernameOrEmail"
+                  type="text"
+                  name="usernameOrEmail"
+                  value={formData.usernameOrEmail}
+                  onChange={handleFormChange}
+                />
+              </div>
+ 
               <div className="form-group">
                 <label htmlFor="bank">Ngân hàng:</label>
                 <input
