@@ -36,7 +36,7 @@ export default function Payment({ onNavigateToQRPayment }) {
         user: recipient.trim(),
       };
       const usersResponse = await fetch(
-        `${process.env.REACT_APP_API_HOST}/api/get-user`,
+        `/api/v1/get-user`,
         {
           method: "POST",
           headers: {
@@ -70,7 +70,7 @@ export default function Payment({ onNavigateToQRPayment }) {
       };
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_HOST}/api/orders`,
+        `/api/v1/orders`,
         {
           method: "POST",
           headers: {
