@@ -51,7 +51,7 @@ export default function Payment({ onNavigateToQRPayment }) {
       }
 
       const usersData = await usersResponse.json();
-      if (!usersData.items?.length) {
+      if (!usersData.id) {
         throw new Error(
           "Không tìm thấy người dùng với username hoặc gmail này.",
         );
