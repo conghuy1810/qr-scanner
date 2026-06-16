@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import './QRPayment.css';
+import React, { useState, useEffect } from "react";
+import "./QRPayment.css";
 
 export default function QRPayment({ orderData = null, onBack = null }) {
   const getInitialOrderData = () => {
     // Priority: use orderData prop > URL parameters > defaults
     if (orderData) {
       return {
-        code: orderData.code || orderData.billCode || 'DH12345',
+        code: orderData.code || orderData.billCode || "DH12345",
         amount: parseInt(orderData.amount) || 100000,
-        usernameOrEmail: orderData.usernameOrEmail || '',
+        usernameOrEmail: orderData.usernameOrEmail || "",
         bank: process.env.REACT_APP_BANK_NAME,
         accountNumber: process.env.REACT_APP_BANK_ACCOUNT_NUMBER,
         qrUrl: orderData.qrUrl || null,
@@ -17,15 +17,15 @@ export default function QRPayment({ orderData = null, onBack = null }) {
   };
 
   const [orderData_, setOrderData] = useState(getInitialOrderData());
-  const [status, setStatus] = useState('waiting');
+  const [status, setStatus] = useState("waiting");
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const [formData, setFormData] = useState(getInitialOrderData());
   const [showForm, setShowForm] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
 
-  const vnd = new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  const vnd = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   });
 
   // Copy to clipboard function
@@ -52,12 +52,12 @@ export default function QRPayment({ orderData = null, onBack = null }) {
 
   // Timer effect
   useEffect(() => {
-    if (status !== 'waiting' || timeLeft <= 0) return;
+    if (status !== "waiting" || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          setStatus('expired');
+          setStatus("expired");
           return 0;
         }
         return prev - 1;
@@ -69,15 +69,15 @@ export default function QRPayment({ orderData = null, onBack = null }) {
 
   // Format time display
   const formatTime = (seconds) => {
-    const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const ss = String(seconds % 60).padStart(2, '0');
+    const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const ss = String(seconds % 60).padStart(2, "0");
     return `${mm}:${ss}`;
   };
 
   const handleUpdateOrder = (e) => {
     e.preventDefault();
     setOrderData(formData);
-    setStatus('waiting');
+    setStatus("waiting");
     setTimeLeft(15 * 60);
     setShowForm(false);
   };
@@ -86,18 +86,22 @@ export default function QRPayment({ orderData = null, onBack = null }) {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === 'amount' ? parseInt(value) || 0 : value,
+      [name]: name === "amount" ? parseInt(value) || 0 : value,
     });
   };
 
   const getStatusStyles = () => {
     switch (status) {
-      case 'paid':
-        return { state: 'paid', text: '✓ Thanh toán thành công', icon: '✓' };
-      case 'expired':
-        return { state: 'expired', text: '✗ Đơn hàng đã hết hạn', icon: '✗' };
+      case "paid":
+        return { state: "paid", text: "✓ Thanh toán thành công", icon: "✓" };
+      case "expired":
+        return { state: "expired", text: "✗ Đơn hàng đã hết hạn", icon: "✗" };
       default:
-        return { state: 'waiting', text: `⏱ Chờ thanh toán: ${formatTime(timeLeft)}`, icon: '⏱' };
+        return {
+          state: "waiting",
+          text: `⏱ Chờ thanh toán: ${formatTime(timeLeft)}`,
+          icon: "⏱",
+        };
     }
   };
 
@@ -121,12 +125,14 @@ export default function QRPayment({ orderData = null, onBack = null }) {
         <main>
           {/* QR Code Display */}
           <div className="qr-section">
-            <img 
-              src={generateQRUrl(orderData_)} 
-              alt="QR code thanh toán" 
+            <img
+              src={generateQRUrl(orderData_)}
+              alt="QR code thanh toán"
               className="qr-code"
             />
-            <p className="qr-instruction">Mở app ngân hàng → Quét QR → Xác nhận</p>
+            <p className="qr-instruction">
+              Mở app ngân hàng → Quét QR → Xác nhận
+            </p>
           </div>
 
           {/* Order Details */}
@@ -134,13 +140,13 @@ export default function QRPayment({ orderData = null, onBack = null }) {
             <dt>Ngân hàng</dt>
             <dd>
               <span>{orderData_.bank}</span>
-              <button 
-                className={`btn-copy ${copiedField === 'bank' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData_.bank, 'bank')}
+              <button
+                className={`btn-copy ${copiedField === "bank" ? "copied" : ""}`}
+                onClick={() => copyToClipboard(orderData_.bank, "bank")}
                 title="Copy"
               >
                 <span className="material-icons">
-                  {copiedField === 'bank' ? 'check_circle' : 'content_copy'}
+                  {copiedField === "bank" ? "check_circle" : "content_copy"}
                 </span>
               </button>
             </dd>
@@ -148,13 +154,17 @@ export default function QRPayment({ orderData = null, onBack = null }) {
             <dt>Số tài khoản</dt>
             <dd>
               <span>{orderData_.accountNumber}</span>
-              <button 
-                className={`btn-copy ${copiedField === 'accountNumber' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData_.accountNumber, 'accountNumber')}
+              <button
+                className={`btn-copy ${copiedField === "accountNumber" ? "copied" : ""}`}
+                onClick={() =>
+                  copyToClipboard(orderData_.accountNumber, "accountNumber")
+                }
                 title="Copy"
               >
                 <span className="material-icons">
-                  {copiedField === 'accountNumber' ? 'check_circle' : 'content_copy'}
+                  {copiedField === "accountNumber"
+                    ? "check_circle"
+                    : "content_copy"}
                 </span>
               </button>
             </dd>
@@ -162,68 +172,70 @@ export default function QRPayment({ orderData = null, onBack = null }) {
             <dt>Nội dung</dt>
             <dd>
               <span>{orderData_.code}</span>
-              <button 
-                className={`btn-copy ${copiedField === 'code' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData_.code, 'code')}
+              <button
+                className={`btn-copy ${copiedField === "code" ? "copied" : ""}`}
+                onClick={() => copyToClipboard(orderData_.code, "code")}
                 title="Copy"
               >
                 <span className="material-icons">
-                  {copiedField === 'code' ? 'check_circle' : 'content_copy'}
+                  {copiedField === "code" ? "check_circle" : "content_copy"}
                 </span>
               </button>
             </dd>
- 
+
             <dt>Username / Gmail</dt>
             <dd>
-              <span>{orderData_.usernameOrEmail || 'Chưa có'}</span>
+              <span>{orderData_.usernameOrEmail || "Chưa có"}</span>
               {orderData_.usernameOrEmail && (
-                <button 
-                  className={`btn-copy ${copiedField === 'usernameOrEmail' ? 'copied' : ''}`}
-                  onClick={() => copyToClipboard(orderData_.usernameOrEmail, 'usernameOrEmail')}
+                <button
+                  className={`btn-copy ${copiedField === "usernameOrEmail" ? "copied" : ""}`}
+                  onClick={() =>
+                    copyToClipboard(
+                      orderData_.usernameOrEmail,
+                      "usernameOrEmail",
+                    )
+                  }
                   title="Copy"
                 >
                   <span className="material-icons">
-                    {copiedField === 'usernameOrEmail' ? 'check_circle' : 'content_copy'}
+                    {copiedField === "usernameOrEmail"
+                      ? "check_circle"
+                      : "content_copy"}
                   </span>
                 </button>
               )}
             </dd>
- 
+
             <dt>Số tiền</dt>
             <dd>
               <span>{vnd.format(orderData_.amount)}</span>
-              <button 
-                className={`btn-copy ${copiedField === 'amount' ? 'copied' : ''}`}
-                onClick={() => copyToClipboard(orderData_.amount.toString(), 'amount')}
+              <button
+                className={`btn-copy ${copiedField === "amount" ? "copied" : ""}`}
+                onClick={() =>
+                  copyToClipboard(orderData_.amount.toString(), "amount")
+                }
                 title="Copy"
               >
                 <span className="material-icons">
-                  {copiedField === 'amount' ? 'check_circle' : 'content_copy'}
+                  {copiedField === "amount" ? "check_circle" : "content_copy"}
                 </span>
               </button>
             </dd>
           </dl>
 
           {/* Status */}
-          <div className={`status status-${statusInfo.state}`} data-state={statusInfo.state}>
+          <div
+            className={`status status-${statusInfo.state}`}
+            data-state={statusInfo.state}
+          >
             {statusInfo.text}
           </div>
 
-          {/* Simulate Payment Button (for testing) */}
-          {status === 'waiting' && (
-            <button 
-              className="btn btn-primary"
-              onClick={() => setStatus('paid')}
-            >
-              Giả lập thanh toán (test)
-            </button>
-          )}
-
-          {status === 'expired' && (
-            <button 
+          {status === "expired" && (
+            <button
               className="btn btn-secondary"
               onClick={() => {
-                setStatus('waiting');
+                setStatus("waiting");
                 setTimeLeft(15 * 60);
               }}
             >
@@ -232,11 +244,11 @@ export default function QRPayment({ orderData = null, onBack = null }) {
           )}
 
           {/* Edit Button */}
-          <button 
+          <button
             className="btn btn-outline"
             onClick={() => setShowForm(!showForm)}
           >
-            {showForm ? 'Huỷ' : 'Chỉnh sửa thông tin'}
+            {showForm ? "Huỷ" : "Chỉnh sửa thông tin"}
           </button>
 
           {/* Edit Form */}
@@ -263,7 +275,7 @@ export default function QRPayment({ orderData = null, onBack = null }) {
                   onChange={handleFormChange}
                 />
               </div>
- 
+
               <div className="form-group">
                 <label htmlFor="usernameOrEmail">Username / Gmail:</label>
                 <input
@@ -274,7 +286,7 @@ export default function QRPayment({ orderData = null, onBack = null }) {
                   onChange={handleFormChange}
                 />
               </div>
- 
+
               <div className="form-group">
                 <label htmlFor="bank">Ngân hàng:</label>
                 <input
