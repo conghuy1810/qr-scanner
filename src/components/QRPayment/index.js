@@ -159,7 +159,17 @@ export default function QRPayment({ orderData = null, onBack = null }) {
           {/* QR Code Display */}
           {status === "paid" ? (
             <div className="payment-success">
-              <div className="success-icon">✓</div>
+              <div className="success-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" className="success-svg" role="img" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#2e7d32" floodOpacity="0.25"/>
+                    </filter>
+                  </defs>
+                  <circle cx="32" cy="32" r="30" fill="#4CAF50" filter="url(#shadow)" />
+                  <polyline className="check" points="18,34 28,44 46,22" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
               <p className="success-text">
                 Thanh toán đã hoàn tất thành công.
               </p>
@@ -292,78 +302,6 @@ export default function QRPayment({ orderData = null, onBack = null }) {
             >
               Tạo đơn mới
             </button>
-          )}
-
-          {/* Edit Button */}
-          <button
-            className="btn btn-outline"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? "Huỷ" : "Chỉnh sửa thông tin"}
-          </button>
-
-          {/* Edit Form */}
-          {showForm && (
-            <form className="edit-form" onSubmit={handleUpdateOrder}>
-              <div className="form-group">
-                <label htmlFor="code">Mã đơn hàng:</label>
-                <input
-                  id="code"
-                  type="text"
-                  name="code"
-                  value={formData.code}
-                  onChange={handleFormChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="amount">Số tiền (VND):</label>
-                <input
-                  id="amount"
-                  type="number"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleFormChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="usernameOrEmail">Username / Gmail:</label>
-                <input
-                  id="usernameOrEmail"
-                  type="text"
-                  name="usernameOrEmail"
-                  value={formData.usernameOrEmail}
-                  onChange={handleFormChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="bank">Ngân hàng:</label>
-                <input
-                  id="bank"
-                  type="text"
-                  name="bank"
-                  value={formData.bank}
-                  onChange={handleFormChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="accountNumber">Số tài khoản:</label>
-                <input
-                  id="accountNumber"
-                  type="text"
-                  name="accountNumber"
-                  value={formData.accountNumber}
-                  onChange={handleFormChange}
-                />
-              </div>
-
-              <button type="submit" className="btn btn-primary btn-full">
-                Cập nhật
-              </button>
-            </form>
           )}
         </main>
       </article>
