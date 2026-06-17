@@ -76,7 +76,7 @@ export default function QRPayment({ orderData = null, onBack = null }) {
     const fetchOrderStatus = async () => {
       try {
         setPollError(null);
-        const response = await fetch(`/v1/orders/${orderData_.orderId}/status`);
+        const response = await fetch(`api/v1/orders/${orderData_.orderId}/status`);
         if (!response.ok) {
           throw new Error(`Lỗi khi kiểm tra trạng thái: ${response.status}`);
         }
