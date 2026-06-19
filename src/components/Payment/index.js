@@ -23,40 +23,14 @@ export default function Payment({ onNavigateToQRPayment }) {
       return;
     }
 
-    if (window.turnstile && !turnstileWidgetId.current && turnstileWidgetRef.current) {
-      turnstileWidgetId.current = window.turnstile.render(turnstileWidgetRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        size: "invisible",
-        callback: (token) => {
-          if (turnstileResolveRef.current) {
-            turnstileResolveRef.current(token);
-            turnstileResolveRef.current = null;
-          }
-        },
-        "error-callback": () => {
-          if (turnstileResolveRef.current) {
-            turnstileResolveRef.current("");
-            turnstileResolveRef.current = null;
-          }
-        },
-        "expired-callback": () => {
-          if (turnstileResolveRef.current) {
-            turnstileResolveRef.current("");
-            turnstileResolveRef.current = null;
-          }
-        },
-      });
-      setTurnstileReady(true);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.turnstile && turnstileWidgetRef.current && !turnstileWidgetId.current) {
-        turnstileWidgetId.current = window.turnstile.render(turnstileWidgetRef.current, {
+    if (
+      window.turnstile &&
+      !turnstileWidgetId.current &&
+      turnstileWidgetRef.current
+    ) {
+      turnstileWidgetId.current = window.turnstile.render(
+        turnstileWidgetRef.current,
+        {
           sitekey: TURNSTILE_SITE_KEY,
           size: "invisible",
           callback: (token) => {
@@ -77,7 +51,48 @@ export default function Payment({ onNavigateToQRPayment }) {
               turnstileResolveRef.current = null;
             }
           },
-        });
+        },
+      );
+      setTurnstileReady(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src =
+      "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (
+        window.turnstile &&
+        turnstileWidgetRef.current &&
+        !turnstileWidgetId.current
+      ) {
+        turnstileWidgetId.current = window.turnstile.render(
+          turnstileWidgetRef.current,
+          {
+            sitekey: TURNSTILE_SITE_KEY,
+            size: "invisible",
+            callback: (token) => {
+              if (turnstileResolveRef.current) {
+                turnstileResolveRef.current(token);
+                turnstileResolveRef.current = null;
+              }
+            },
+            "error-callback": () => {
+              if (turnstileResolveRef.current) {
+                turnstileResolveRef.current("");
+                turnstileResolveRef.current = null;
+              }
+            },
+            "expired-callback": () => {
+              if (turnstileResolveRef.current) {
+                turnstileResolveRef.current("");
+                turnstileResolveRef.current = null;
+              }
+            },
+          },
+        );
         setTurnstileReady(true);
       }
     };
@@ -148,14 +163,14 @@ export default function Payment({ onNavigateToQRPayment }) {
     setError(null);
     setUserOptions([]);
     setSelectedUser(null);
-
+    const token = await executeTurnstile();
     try {
       const response = await fetch("/api/v1/get-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user: trimmed }),
+        body: JSON.stringify({ user: trimmed, turnstileToken: token }),
       });
 
       if (!response.ok) {
