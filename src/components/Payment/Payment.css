@@ -231,6 +231,9 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .user-options-title {
@@ -238,21 +241,21 @@
   font-weight: 600;
   margin-bottom: 12px;
   color: #374151;
+  grid-column: 1 / -1;
 }
 
 .user-option {
-  width: 100%;
   text-align: left;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 14px 16px;
-  margin-bottom: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .user-option:hover {
@@ -263,6 +266,10 @@
 .user-option small {
   color: #6b7280;
   font-size: 13px;
+}
+
+.user-options-list {
+  grid-auto-rows: minmax(0, auto);
 }
 
 /* Buttons */
@@ -361,5 +368,9 @@
   .btn {
     padding: 14px 20px;
     font-size: 15px;
+  }
+
+  .user-options-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
