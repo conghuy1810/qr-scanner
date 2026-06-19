@@ -236,6 +236,7 @@ export default function Payment({ onNavigateToQRPayment }) {
                   >
                     <span>{getUserLabel(user)}</span>
                     {user.email && <small>{user.email}</small>}
+                    {user.phone && <small>{user.phone}</small>}
                   </button>
                 ))}
               </div>
