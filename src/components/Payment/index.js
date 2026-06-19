@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Payment.css";
 
 export default function Payment({ onNavigateToQRPayment }) {
@@ -9,7 +9,111 @@ export default function Payment({ onNavigateToQRPayment }) {
   const [userOptions, setUserOptions] = useState([]);
   const [checkingUser, setCheckingUser] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [turnstileLoading, setTurnstileLoading] = useState(false);
+  const [turnstileReady, setTurnstileReady] = useState(false);
   const [error, setError] = useState(null);
+  const turnstileWidgetRef = useRef(null);
+  const turnstileWidgetId = useRef(null);
+  const turnstileResolveRef = useRef(null);
+  const TURNSTILE_SITE_KEY = process.env.REACT_APP_TURNSTILE_SITE_KEY;
+
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) {
+      setError("Turnstile site key chưa được cấu hình.");
+      return;
+    }
+
+    if (window.turnstile && !turnstileWidgetId.current && turnstileWidgetRef.current) {
+      turnstileWidgetId.current = window.turnstile.render(turnstileWidgetRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        size: "invisible",
+        callback: (token) => {
+          if (turnstileResolveRef.current) {
+            turnstileResolveRef.current(token);
+            turnstileResolveRef.current = null;
+          }
+        },
+        "error-callback": () => {
+          if (turnstileResolveRef.current) {
+            turnstileResolveRef.current("");
+            turnstileResolveRef.current = null;
+          }
+        },
+        "expired-callback": () => {
+          if (turnstileResolveRef.current) {
+            turnstileResolveRef.current("");
+            turnstileResolveRef.current = null;
+          }
+        },
+      });
+      setTurnstileReady(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.turnstile && turnstileWidgetRef.current && !turnstileWidgetId.current) {
+        turnstileWidgetId.current = window.turnstile.render(turnstileWidgetRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          size: "invisible",
+          callback: (token) => {
+            if (turnstileResolveRef.current) {
+              turnstileResolveRef.current(token);
+              turnstileResolveRef.current = null;
+            }
+          },
+          "error-callback": () => {
+            if (turnstileResolveRef.current) {
+              turnstileResolveRef.current("");
+              turnstileResolveRef.current = null;
+            }
+          },
+          "expired-callback": () => {
+            if (turnstileResolveRef.current) {
+              turnstileResolveRef.current("");
+              turnstileResolveRef.current = null;
+            }
+          },
+        });
+        setTurnstileReady(true);
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [TURNSTILE_SITE_KEY]);
+
+  const executeTurnstile = () => {
+    if (!window.turnstile) {
+      throw new Error("Turnstile chưa sẵn sàng.");
+    }
+    if (!turnstileWidgetId.current) {
+      throw new Error("Widget Turnstile chưa được render.");
+    }
+
+    return new Promise((resolve, reject) => {
+      turnstileResolveRef.current = (token) => {
+        if (!token) {
+          reject(new Error("Xác thực Turnstile không thành công."));
+          return;
+        }
+        resolve(token);
+      };
+
+      window.turnstile.execute(turnstileWidgetId.current);
+      setTimeout(() => {
+        if (turnstileResolveRef.current) {
+          turnstileResolveRef.current = null;
+          reject(new Error("Xác thực Turnstile hết thời gian."));
+        }
+      }, 15000);
+    });
+  };
 
   // Predefined denominations
   const denominations = [
@@ -104,9 +208,11 @@ export default function Payment({ onNavigateToQRPayment }) {
         );
       }
 
+      const token = await executeTurnstile();
       const payload = {
         amount,
         accountId,
+        turnstileToken: token,
       };
 
       const response = await fetch("/api/v1/orders", {
@@ -224,6 +330,7 @@ export default function Payment({ onNavigateToQRPayment }) {
                 {checkingUser ? "Đang kiểm tra..." : "Kiểm tra"}
               </button>
             </div>
+            <div ref={turnstileWidgetRef} style={{ display: "none" }} />
             {userOptions.length > 0 && (
               <div className="user-options-list">
                 <div className="user-options-title">Chọn người dùng</div>
