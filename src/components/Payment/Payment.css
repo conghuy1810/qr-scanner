@@ -258,7 +258,8 @@
   min-width: 0;
 }
 
-.user-option:hover {
+.user-option:hover,
+.user-option.selected {
   border-color: #667eea;
   background: #eef2ff;
 }

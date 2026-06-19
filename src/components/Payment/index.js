@@ -67,12 +67,10 @@ export default function Payment({ onNavigateToQRPayment }) {
         );
       }
 
+      setUserOptions(users);
       if (users.length === 1) {
         setSelectedUser(users[0]);
         setRecipient(getUserLabel(users[0]));
-        setUserOptions([]);
-      } else {
-        setUserOptions(users);
       }
     } catch (err) {
       setError(err.message || "Không tìm thấy người dùng. Vui lòng thử lại.");
@@ -84,7 +82,6 @@ export default function Payment({ onNavigateToQRPayment }) {
   const handleSelectUser = (user) => {
     setSelectedUser(user);
     setRecipient(getUserLabel(user));
-    setUserOptions([]);
     setError(null);
   };
 
@@ -189,11 +186,24 @@ export default function Payment({ onNavigateToQRPayment }) {
           {error && <div className="error-message">⚠️ {error}</div>}
 
           <div className="recipient-section">
-            <h3 className="section-title">Username / Gmail</h3>
+            <h3 className="section-title">Account/Gmail</h3>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#1f2937",
+                margin: "0 0 20px 0",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px,",
+              }}
+            >
+              Nhập tên account hoặc gmail sau đó ấn kiểm tra để chọn tài khoản
+              cần nạp tiền
+            </span>
             <div className="recipient-input-row">
               <input
                 type="text"
-                placeholder="Nhập username hoặc gmail"
+                placeholder="Nhập account hoặc gmail"
                 value={recipient}
                 onChange={(e) => {
                   setRecipient(e.target.value);
@@ -221,7 +231,7 @@ export default function Payment({ onNavigateToQRPayment }) {
                   <button
                     key={user.id || getUserLabel(user)}
                     type="button"
-                    className="user-option"
+                    className={`user-option ${selectedUser?.id === user.id || selectedUser?.username === user.username || selectedUser?.email === user.email ? "selected" : ""}`}
                     onClick={() => handleSelectUser(user)}
                   >
                     <span>{getUserLabel(user)}</span>
