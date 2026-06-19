@@ -223,11 +223,11 @@ export default function Payment({ onNavigateToQRPayment }) {
         );
       }
 
-      const token = await executeTurnstile();
+      // const token = await executeTurnstile();
       const payload = {
         amount,
         accountId,
-        turnstileToken: token,
+        // turnstileToken: token,
       };
 
       const response = await fetch("/api/v1/orders", {
