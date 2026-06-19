@@ -155,6 +155,41 @@ export default function Payment({ onNavigateToQRPayment }) {
     return user.username || user.email || user.name || user.id || "Người dùng";
   };
 
+  const maskEmail = (email) => {
+    if (!email) return "";
+    const rawEmail = typeof email === "string" ? email : `${email}`;
+    const [localPart, domain] = rawEmail.split("@");
+    if (!domain) return rawEmail;
+
+    if (localPart.length <= 4) {
+      const visibleStart = 1;
+      const visibleEnd = 1;
+      const maskedLocal = `${localPart.slice(0, visibleStart)}${"*".repeat(Math.max(0, localPart.length - visibleStart - visibleEnd))}${localPart.slice(localPart.length - visibleEnd)}`;
+      return `${maskedLocal}@${domain}`;
+    }
+
+    const visibleLocalStart = Math.min(3, localPart.length - 2);
+    const visibleLocalEnd = 2;
+    const maskedLocalLength = Math.max(1, localPart.length - visibleLocalStart - visibleLocalEnd);
+    const maskedLocal = `${localPart.slice(0, visibleLocalStart)}${"*".repeat(maskedLocalLength)}${localPart.slice(localPart.length - visibleLocalEnd)}`;
+
+    return `${maskedLocal}@${domain}`;
+  };
+
+  const maskPhone = (phone) => {
+    const rawPhone = phone == null ? "" : typeof phone === "string" ? phone : `${phone}`;
+    if (!rawPhone) return "";
+    const digits = rawPhone.replace(/\D/g, "");
+    if (digits.length <= 4) {
+      return rawPhone.replace(/\d/g, "*");
+    }
+
+    const visibleStart = 3;
+    const visibleEnd = 2;
+    const masked = `${digits.slice(0, visibleStart)}${"*".repeat(digits.length - visibleStart - visibleEnd)}${digits.slice(-visibleEnd)}`;
+    return masked;
+  };
+
   const fetchUsers = async (query) => {
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -357,8 +392,8 @@ export default function Payment({ onNavigateToQRPayment }) {
                     onClick={() => handleSelectUser(user)}
                   >
                     <span>{getUserLabel(user)}</span>
-                    {user.email && <small>{user.email}</small>}
-                    {user.phone && <small>{user.phone}</small>}
+                    {user.email && <small>{maskEmail(user.email)}</small>}
+                    {user.phone && <small>{maskPhone(user.phone)}</small>}
                   </button>
                 ))}
               </div>
