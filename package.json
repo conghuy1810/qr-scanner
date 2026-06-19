@@ -15,6 +15,7 @@
   "scripts": {
     "start": "dotenv -e .env react-scripts start",
     "start:dev": "dotenv -e .env.dev react-scripts start",
+    "start:production": "dotenv -e .env.production react-scripts start",
     "build": "rm -rf build && dotenv -e .env.production react-scripts build",
     "test": "dotenv -e .env react-scripts test",
     "eject": "react-scripts eject"

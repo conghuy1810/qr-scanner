@@ -5,6 +5,9 @@ export default function Payment({ onNavigateToQRPayment }) {
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [customAmount, setCustomAmount] = useState("");
   const [recipient, setRecipient] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userOptions, setUserOptions] = useState([]);
+  const [checkingUser, setCheckingUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -21,9 +24,73 @@ export default function Payment({ onNavigateToQRPayment }) {
     currency: "VND",
   });
 
+  const normalizeUsers = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data?.users && Array.isArray(data.users)) return data.users;
+    if (data?.results && Array.isArray(data.results)) return data.results;
+    if (data?.id) return [data];
+    return [];
+  };
+
+  const getUserLabel = (user) => {
+    return user.username || user.email || user.name || user.id || "Người dùng";
+  };
+
+  const fetchUsers = async (query) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+
+    setCheckingUser(true);
+    setError(null);
+    setUserOptions([]);
+    setSelectedUser(null);
+
+    try {
+      const response = await fetch("/api/v1/get-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user: trimmed }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Lỗi khi tìm người dùng: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const users = normalizeUsers(data);
+
+      if (!users.length) {
+        throw new Error(
+          "Không tìm thấy người dùng với username hoặc gmail này.",
+        );
+      }
+
+      if (users.length === 1) {
+        setSelectedUser(users[0]);
+        setRecipient(getUserLabel(users[0]));
+        setUserOptions([]);
+      } else {
+        setUserOptions(users);
+      }
+    } catch (err) {
+      setError(err.message || "Không tìm thấy người dùng. Vui lòng thử lại.");
+    } finally {
+      setCheckingUser(false);
+    }
+  };
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setRecipient(getUserLabel(user));
+    setUserOptions([]);
+    setError(null);
+  };
+
   const handleSelectAmount = async (amount) => {
-    if (!recipient.trim()) {
-      setError("Vui lòng nhập username hoặc gmail");
+    if (!selectedUser) {
+      setError("Vui lòng chọn người dùng trước khi tạo đơn.");
       return;
     }
 
@@ -32,48 +99,26 @@ export default function Payment({ onNavigateToQRPayment }) {
     setError(null);
 
     try {
-      const payloadUser = {
-        user: recipient.trim(),
-      };
-      const usersResponse = await fetch(
-        `/api/v1/get-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payloadUser),
-        },
-      );
-
-      if (!usersResponse.ok) {
-        throw new Error(`Lỗi khi tìm người dùng: ${usersResponse.statusText}`);
-      }
-
-      const usersData = await usersResponse.json();
-      if (!usersData.id) {
+      const accountId =
+        selectedUser.id || selectedUser.accountId || selectedUser.userId;
+      if (!accountId) {
         throw new Error(
-          "Không tìm thấy người dùng với username hoặc gmail này.",
+          "Dữ liệu người dùng không hợp lệ. Vui lòng chọn lại người dùng.",
         );
       }
 
-      const accountId = usersData.id;
-      // Build order payload and call API via POST
       const payload = {
-        amount: amount,
+        amount,
         accountId,
       };
 
-      const response = await fetch(
-        `/api/v1/orders`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch("/api/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
         throw new Error(`API error: ${response.statusText}`);
@@ -81,10 +126,9 @@ export default function Payment({ onNavigateToQRPayment }) {
 
       const orderData = await response.json();
 
-      // Navigate to QRPayment with the order data and recipient info
       onNavigateToQRPayment({
         ...orderData,
-        usernameOrEmail: recipient.trim(),
+        usernameOrEmail: getUserLabel(selectedUser),
       });
     } catch (err) {
       setError(err.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
@@ -103,15 +147,20 @@ export default function Payment({ onNavigateToQRPayment }) {
   const handleCustomAmountSubmit = (e) => {
     e.preventDefault();
 
-    if (!recipient.trim()) {
-      setError("Vui lòng nhập username hoặc gmail");
+    if (!selectedUser) {
+      setError("Vui lòng chọn người dùng trước khi tạo đơn.");
       return;
     }
 
-    const amount = parseInt(customAmount);
-
     if (!customAmount) {
       setError("Vui lòng nhập số tiền");
+      return;
+    }
+
+    const amount = parseInt(customAmount, 10);
+
+    if (isNaN(amount)) {
+      setError("Số tiền không hợp lệ.");
       return;
     }
 
@@ -141,17 +190,46 @@ export default function Payment({ onNavigateToQRPayment }) {
 
           <div className="recipient-section">
             <h3 className="section-title">Username / Gmail</h3>
-            <input
-              type="text"
-              placeholder="Nhập username hoặc gmail"
-              value={recipient}
-              onChange={(e) => {
-                setRecipient(e.target.value);
-                setError(null);
-              }}
-              disabled={loading}
-              className="amount-input"
-            />
+            <div className="recipient-input-row">
+              <input
+                type="text"
+                placeholder="Nhập username hoặc gmail"
+                value={recipient}
+                onChange={(e) => {
+                  setRecipient(e.target.value);
+                  setSelectedUser(null);
+                  setUserOptions([]);
+                  setError(null);
+                }}
+                onBlur={() => fetchUsers(recipient)}
+                disabled={loading || checkingUser}
+                className="amount-input"
+              />
+              <button
+                type="button"
+                className="btn btn-secondary user-check-btn"
+                onClick={() => fetchUsers(recipient)}
+                disabled={loading || checkingUser || !recipient.trim()}
+              >
+                {checkingUser ? "Đang kiểm tra..." : "Kiểm tra"}
+              </button>
+            </div>
+            {userOptions.length > 0 && (
+              <div className="user-options-list">
+                <div className="user-options-title">Chọn người dùng</div>
+                {userOptions.map((user) => (
+                  <button
+                    key={user.id || getUserLabel(user)}
+                    type="button"
+                    className="user-option"
+                    onClick={() => handleSelectUser(user)}
+                  >
+                    <span>{getUserLabel(user)}</span>
+                    {user.email && <small>{user.email}</small>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Predefined Denominations */}
@@ -165,7 +243,7 @@ export default function Payment({ onNavigateToQRPayment }) {
                     loading && selectedAmount === amount ? "loading" : ""
                   }`}
                   onClick={() => handleSelectAmount(amount)}
-                  disabled={loading}
+                  disabled={loading || !selectedUser}
                 >
                   <span className="amount">{vnd.format(amount)}</span>
                   {selectedAmount === amount && loading && (
@@ -186,11 +264,13 @@ export default function Payment({ onNavigateToQRPayment }) {
                   placeholder="Nhập số tiền (20.000 - 10.000.000 VND)"
                   value={
                     customAmount
-                      ? vnd.format(parseInt(customAmount)).replace(/[₫\s]/g, "")
+                      ? vnd
+                          .format(parseInt(customAmount, 10))
+                          .replace(/[₫\s]/g, "")
                       : ""
                   }
                   onChange={handleCustomAmountChange}
-                  disabled={loading}
+                  disabled={loading || !selectedUser}
                   className="amount-input"
                 />
                 <span className="currency">VND</span>
@@ -198,7 +278,7 @@ export default function Payment({ onNavigateToQRPayment }) {
               <button
                 type="submit"
                 className="btn btn-primary btn-full"
-                disabled={loading || !customAmount}
+                disabled={loading || !customAmount || !selectedUser}
               >
                 {loading ? "Đang tạo đơn..." : "Xác nhận"}
               </button>
